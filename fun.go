@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -42,8 +41,6 @@ func Code2Session(code string) (WxSessionResponse, error) {
 	params.Add("grant_type", wx_config.GrantType)
 
 	req.URL.RawQuery = params.Encode()
-	fmt.Println(wx_config)
-	fmt.Print(req.URL.Query())
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -66,17 +63,17 @@ func Code2Session(code string) (WxSessionResponse, error) {
 
 }
 
-func CreateToken(user string) (string, error) {
+func CreateToken(user_id string) (string, error) {
 	sign_key := []byte(token_secret_key)
 
 	type CustomClaim struct {
-		User string
+		UserId string
 		jwt.StandardClaims
 	}
 
 	exp := time.Now().Add(24 * time.Hour)
 	claims := CustomClaim{
-		user,
+		user_id,
 		jwt.StandardClaims{
 			ExpiresAt: exp.Unix(),
 		},
@@ -92,12 +89,18 @@ func CreateToken(user string) (string, error) {
 
 func ParseToken(token_str string) (string, error) {
 	type CustomClaim struct {
-		User string
+		UserId string
 		jwt.StandardClaims
 	}
 
 	token, err := jwt.ParseWithClaims(token_str, &CustomClaim{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte("AllYourBase"), nil
 	})
+
+	if claims, ok := token.Claims.(*CustomClaim); ok && token.Valid {
+		return claims.UserId, nil
+	} else {
+		return "", err
+	}
 
 }

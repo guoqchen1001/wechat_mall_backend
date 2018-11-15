@@ -5,15 +5,7 @@ import (
 	"errors"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
-
-// 配置文件信息，对应数据库中参数配置表t_sys_parn
-type Config struct {
-	No   string `gorm:"primary_key" json:"no"`
-	Val  string `json:"value"`
-	Name string `json:"name"`
-}
 
 // 微信配置信息，由参数表获取
 type WxConfig struct {
@@ -21,23 +13,6 @@ type WxConfig struct {
 	AppSecret string
 	GrantType string
 	Code      string
-}
-
-// 用户
-type User struct {
-	UserId    string `gorm:"primary_key"` // 用户id
-	UserNo    string // 用户编码
-	UserName  string // 用户名
-	WechatId  string `json:"openId"` // 微信id
-	Phone     string // 手机号
-	Country   string // 国家
-	NickName  string `json:"nickName"`  //  昵称
-	AvatarUrl string `json:"avatarurl"` // 图像地址
-	Gender    int    // 性别
-	Province  string // 省份
-	City      string // 城市
-	Language  string // 显示语言
-
 }
 
 // 微信获取session返回信息
