@@ -1,3 +1,4 @@
+// user.go 用户
 package main
 
 import (
@@ -30,7 +31,7 @@ type User struct {
 }
 
 // 微信登录
-func wxapp_login(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
+func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 	var response_data ResponseData
 	var wx_session_response WxSessionResponse
@@ -112,7 +113,7 @@ func wxapp_login(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 }
 
 // 微信用户注册
-func wxapp_register(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
+func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -201,5 +202,41 @@ func wxapp_register(w http.ResponseWriter, r *http.Request, o httprouter.Params)
 
 	output, _ := json.Marshal(response_data)
 	fmt.Fprint(w, string(output))
+
+}
+
+// 检查token是否合法
+func CheckToken(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			var response_data ResponseData
+			response_data.Code = 10
+			response_data.Msg = err.(error).Error()
+			output, _ := json.Marshal(response_data)
+			fmt.Fprint(w, output)
+		}
+	}()
+
+	r.ParseForm()
+	if len(r.Form["token"]) <= 0 {
+		panic(fmt.Errorf("未找到有效的%s值", "token"))
+	}
+
+	token := r.Form["token"][0]
+	_, err := ParseToken(token)
+	if err != nil {
+		panic(err)
+	}
+
+	var respons_data ResponseData
+	respons_data.Code = 0
+	output, err := json.Marshal(respons_data)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprint(w, output)
+	return
 
 }

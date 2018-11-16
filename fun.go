@@ -1,3 +1,4 @@
+// fun.go 通用函数
 package main
 
 import (

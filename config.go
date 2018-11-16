@@ -1,3 +1,4 @@
+// config.go 配置信息
 package main
 
 import (
@@ -14,11 +15,11 @@ import (
 type Config struct {
 	No   string `gorm:"primary_key" json:"no"`
 	Val  string `json:"value"`
-	Name string `json:"name"`
+	Name string `json:"remark"`
 }
 
 // 获取系统参数值
-func get_value(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
+func GetValue(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 	var config Config
 	var response_data ResponseData

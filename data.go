@@ -1,10 +1,11 @@
-// store.go
+// store.go 通过结构
 package main
 
 import (
 	"errors"
 
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 // 微信配置信息，由参数表获取
@@ -64,7 +65,7 @@ func init() {
 		panic(err)
 	}
 	// 创建基础配置表
-	db.AutoMigrate(&Config{}, &User{})
+	db.AutoMigrate(&Config{}, &User{}, &Banner{})
 
 	// 基础数据后续需转化为sql语句执行
 
@@ -89,6 +90,14 @@ func init() {
 	config.No = "appSecret"
 	config.Val = "d89d3ee840cd9dd89015086962229f52"
 	config.Name = "小程序密钥"
+
+	db.FirstOrCreate(&config, config)
+
+	// 写入基础数据-最低充值金额
+	config = new(Config)
+	config.No = "recharge_amount_min"
+	config.Val = "1"
+	config.Name = "充值最少金额"
 
 	db.FirstOrCreate(&config, config)
 

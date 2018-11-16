@@ -17,9 +17,12 @@ type ResponseData struct {
 func main() {
 
 	mux := httprouter.New()
-	mux.GET("/config/get-value", get_value)
-	mux.GET("/user/wxapp/login", wxapp_login)
-	mux.GET("/user/wxapp/register/complex", wxapp_register)
+	mux.GET("/config/get-value", GetValue)                 // 获取配置
+	mux.GET("/user/wxapp/login", WXAppLogin)               // 小程序登录
+	mux.GET("/user/wxapp/register/complex", WXAppRegister) // 小程序注册
+	mux.GET("/user/check-token", CheckToken)               // 校验token
+	mux.GET("/score/send/rule", ScoreSendRule)             // 积分赠送规则
+	mux.GET("/shop/banner/list", GetBannerList)            // 获取banner
 
 	server := http.Server{
 		Addr:    "127.0.0.1:8081",
