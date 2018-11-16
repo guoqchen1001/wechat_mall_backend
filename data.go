@@ -1,4 +1,4 @@
-// store.go 通过结构
+// data.go 通用数据结构
 package main
 
 import (
@@ -25,6 +25,7 @@ type WxSessionResponse struct {
 	ErrorMsg   string `json:"errmsg"`      // 错误信息
 }
 
+// 获取微信小程序基本配置
 func (wx_config *WxConfig) Init() error {
 
 	var config Config
