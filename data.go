@@ -60,6 +60,7 @@ func (wx_config *WxConfig) Init() error {
 var db *gorm.DB
 var err error
 
+// init 数据库连接
 func init() {
 
 	db, err = gorm.Open("postgres", "host=127.0.0.1 port=5432 user=wechat dbname=wechat_mall password=123 sslmode=disable")
@@ -69,15 +70,22 @@ func init() {
 			"db": "connect",
 		}).Panic(err)
 	}
+
+}
+
+// init 数据库建表
+func init() {
 	// 创建基础配置表
 	err = db.AutoMigrate(&Config{}, &User{}, &Banner{}).Error
 	if err != nil {
 		log.WithFields(logrus.Fields{
-			"db": "init",
+			"db": "initTable",
 		}).Panic(err)
 	}
+}
 
-	// 基础数据后续需转化为sql语句执行
+//init 基础数据后续需转化为sql语句执行
+func init() {
 
 	// 写入基础数据-店铺名称
 	config := new(Config)
@@ -85,7 +93,12 @@ func init() {
 	config.Val = "小卖铺"
 	config.Name = "店铺名称"
 
-	db.FirstOrCreate(&config, config)
+	entry := log.WithFields(logrus.Fields{"config": "init"})
+
+	err := db.FirstOrCreate(&config, config).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 
 	// 写入基础数据-小程序appid
 	config = new(Config)
@@ -93,7 +106,10 @@ func init() {
 	config.Val = "wxb05d528592b74609"
 	config.Name = "小程序appid"
 
-	db.FirstOrCreate(&config, config)
+	err = db.FirstOrCreate(&config, config).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 
 	// 写入基础数据库-小程序密钥
 	config = new(Config)
@@ -101,7 +117,10 @@ func init() {
 	config.Val = "d89d3ee840cd9dd89015086962229f52"
 	config.Name = "小程序密钥"
 
-	db.FirstOrCreate(&config, config)
+	err = db.FirstOrCreate(&config, config).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 
 	// 写入基础数据-最低充值金额
 	config = new(Config)
@@ -109,6 +128,8 @@ func init() {
 	config.Val = "1"
 	config.Name = "充值最少金额"
 
-	db.FirstOrCreate(&config, config)
-
+	err = db.FirstOrCreate(&config, config).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 }
