@@ -4,28 +4,30 @@ package main
 import (
 	"errors"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-// 微信配置信息，由参数表获取
+//WxConfig 微信配置信息，由参数表获取
 type WxConfig struct {
-	AppId     string
+	AppID     string
 	AppSecret string
 	GrantType string
 	Code      string
 }
 
-// 微信获取session返回信息
+//WxSessionResponse 微信获取session返回信息
 type WxSessionResponse struct {
-	OpenId     string `json:"openid"`      // 用户唯一标识
+	OpenID     string `json:"openid"`      // 用户唯一标识
 	SessionKey string `json:"session_key"` // 会话密钥
-	UnionId    string `json:"unionid"`     // 用户在开放平台的唯一标识符
+	UnionID    string `json:"unionid"`     // 用户在开放平台的唯一标识符
 	ErrorCode  int    `json:"errcode"`     // 错误码
 	ErrorMsg   string `json:"errmsg"`      // 错误信息
 }
 
-// 获取微信小程序基本配置
+//Init 获取微信小程序基本配置
 func (wx_config *WxConfig) Init() error {
 
 	var config Config
@@ -35,7 +37,7 @@ func (wx_config *WxConfig) Init() error {
 	db.Where("No = ?", "appId").First(&config)
 
 	if config != (Config{}) {
-		wx_config.AppId = config.Val
+		wx_config.AppID = config.Val
 	} else {
 		return errors.New("未找到有效的小程序appid，请检查系统设置")
 	}
@@ -63,10 +65,17 @@ func init() {
 	db, err = gorm.Open("postgres", "host=127.0.0.1 port=5432 user=wechat dbname=wechat_mall password=123 sslmode=disable")
 
 	if err != nil {
-		panic(err)
+		log.WithFields(logrus.Fields{
+			"db": "connect",
+		}).Panic(err)
 	}
 	// 创建基础配置表
-	db.AutoMigrate(&Config{}, &User{}, &Banner{})
+	err = db.AutoMigrate(&Config{}, &User{}, &Banner{}).Error
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"db": "init",
+		}).Panic(err)
+	}
 
 	// 基础数据后续需转化为sql语句执行
 

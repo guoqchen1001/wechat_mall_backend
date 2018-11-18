@@ -4,10 +4,12 @@ package main
 import (
 	"net/http"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/julienschmidt/httprouter"
 )
 
-// 通用信息返回结构
+//ResponseData 通用信息返回结构
 type ResponseData struct {
 	Code int         `json:"code"`    // 返回值
 	Msg  string      `json:"message"` // 错误信息
@@ -28,6 +30,9 @@ func main() {
 		Addr:    "127.0.0.1:8081",
 		Handler: mux,
 	}
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	err := server.ListenAndServeTLS("cert.pem", "key.pem")
+	log.WithFields(logrus.Fields{
+		"webserver": "error",
+	}).Error(err.Error)
 
 }

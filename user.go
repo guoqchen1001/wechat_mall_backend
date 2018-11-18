@@ -9,20 +9,20 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/julienschmidt/httprouter"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/xlstudio/wxbizdatacrypt"
 )
 
-// 用户
+//User 用户
 type User struct {
-	UserId    string `gorm:"primary_key"` // 用户id
+	UserID    string `gorm:"primary_key"` // 用户id
 	UserNo    string // 用户编码
 	UserName  string // 用户名
-	WechatId  string `json:"openId"` // 微信id
+	WechatID  string `json:"openId"` // 微信id
 	Phone     string // 手机号
 	Country   string // 国家
 	NickName  string `json:"nickName"`  //  昵称
-	AvatarUrl string `json:"avatarurl"` // 图像地址
+	AvatarURL string `json:"avatarurl"` // 图像地址
 	Gender    int    // 性别
 	Province  string // 省份
 	City      string // 城市
@@ -30,11 +30,11 @@ type User struct {
 
 }
 
-// 微信登录
+//WXAppLogin 微信登录
 func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
-	var response_data ResponseData
-	var wx_session_response WxSessionResponse
+	var responseData ResponseData
+	var wxSessionResponse WxSessionResponse
 	var (
 		UserNotFoundError = errors.New("用户不存在")
 		CodeNotFoundError = errors.New("请传入有效的code值")
@@ -45,17 +45,17 @@ func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 			switch err {
 			case UserNotFoundError:
-				response_data.Code = 10000
+				responseData.Code = 10000
 
 			case CodeNotFoundError:
-				response_data.Code = 20
+				responseData.Code = 20
 
 			default:
-				response_data.Code = 10
+				responseData.Code = 10
 			}
 
-			response_data.Msg = err.(error).Error()
-			output, _ := json.Marshal(response_data)
+			responseData.Msg = err.(error).Error()
+			output, _ := json.Marshal(responseData)
 			fmt.Fprint(w, string(output))
 		}
 	}()
@@ -69,7 +69,7 @@ func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 	// 获取微信session和openid
 	code := r.Form["code"][0]
-	wx_session_response, err = Code2Session(code)
+	wxSessionResponse, err = Code2Session(code)
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +77,7 @@ func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 	// 用户不存在需要注册
 	user := User{}
 
-	err = db.Where(&User{WechatId: wx_session_response.OpenId}).First(&user).Error
+	err = db.Where(&User{WechatID: wxSessionResponse.OpenID}).First(&user).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
@@ -87,24 +87,24 @@ func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 		panic(UserNotFoundError)
 	}
 
-	token, err := CreateToken(user.UserId)
+	token, err := CreateToken(user.UserID)
 	if err != nil {
 		panic(err)
 	}
 
 	type LoginData struct {
-		Uid   string `json:"uid"`
+		UID   string `json:"uid"`
 		Token string `json:"token"`
 	}
 
-	var login_data LoginData
-	login_data.Uid = user.UserId
-	login_data.Token = token
+	var loginData LoginData
+	loginData.UID = user.UserID
+	loginData.Token = token
 
-	response_data.Code = 0
-	response_data.Data = login_data
+	responseData.Code = 0
+	responseData.Data = loginData
 
-	output, err := json.Marshal(response_data)
+	output, err := json.Marshal(responseData)
 	if err != nil {
 		panic(err)
 	}
@@ -112,15 +112,15 @@ func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 	fmt.Fprint(w, string(output))
 }
 
-// 微信用户注册
+//WXAppRegister 微信用户注册
 func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			var response_data ResponseData // 最终返回值
-			response_data.Code = 10
-			response_data.Msg = err.(error).Error()
-			output, _ := json.Marshal(response_data)
+			var responseData ResponseData // 最终返回值
+			responseData.Code = 10
+			responseData.Msg = err.(error).Error()
+			output, _ := json.Marshal(responseData)
 			fmt.Fprint(w, string(output))
 		}
 	}()
@@ -128,9 +128,9 @@ func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 	// 解析参数
 	r.ParseForm()
 
-	var response_data ResponseData            // 最终返回值
-	var wx_session_response WxSessionResponse // 通过小程序code获取的session值
-	var wx_config WxConfig                    // 微信设置
+	var responseData ResponseData           // 最终返回值
+	var wxSessionResponse WxSessionResponse // 通过小程序code获取的session值
+	var wxConfig WxConfig                   // 微信设置
 
 	params := []string{
 		"code", "encryptedData", "iv",
@@ -138,7 +138,7 @@ func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 
 	for _, param := range params {
 		if len(r.Form[param]) <= 0 {
-			panic(errors.New(fmt.Sprintf("请传入有效的%s值", param)))
+			panic(fmt.Errorf("请传入有效的%s值", param))
 		}
 	}
 
@@ -147,20 +147,20 @@ func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 	iv := r.Form["iv"][0]
 
 	// 获取session
-	wx_session_response, err = Code2Session(code)
+	wxSessionResponse, err = Code2Session(code)
 	if err != nil {
 		panic(err)
 	}
 
 	// 获取微信设置
-	err = wx_config.Init()
+	err = wxConfig.Init()
 	if err != nil {
 		panic(err)
 	}
 
 	pc := wxbizdatacrypt.WxBizDataCrypt{
-		AppID:      wx_config.AppId,
-		SessionKey: wx_session_response.SessionKey,
+		AppID:      wxConfig.AppID,
+		SessionKey: wxSessionResponse.SessionKey,
 	}
 
 	result, err := pc.Decrypt(encryptedData, iv, true)
@@ -174,10 +174,10 @@ func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 		panic(err)
 	}
 	user := new(User)
-	user.UserId = userid.String()
+	user.UserID = userid.String()
 
-	result_byte := []byte(result.(string))
-	err = json.Unmarshal(result_byte, &user)
+	resultByte := []byte(result.(string))
+	err = json.Unmarshal(resultByte, &user)
 	if err != nil {
 		panic(err)
 	}
@@ -192,28 +192,28 @@ func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 	}
 
 	type RegisterData struct {
-		UserId string `json:"user_id"`
+		UserID string `json:"user_id"`
 	}
 
-	var register_data RegisterData
-	register_data.UserId = user.UserId
-	response_data.Code = 0
-	response_data.Data = register_data
+	var registerData RegisterData
+	registerData.UserID = user.UserID
+	responseData.Code = 0
+	responseData.Data = registerData
 
-	output, _ := json.Marshal(response_data)
+	output, _ := json.Marshal(responseData)
 	fmt.Fprint(w, string(output))
 
 }
 
-// 检查token是否合法
+//CheckToken 检查token是否合法
 func CheckToken(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			var response_data ResponseData
-			response_data.Code = 10
-			response_data.Msg = err.(error).Error()
-			output, _ := json.Marshal(response_data)
+			var responseData ResponseData
+			responseData.Code = 10
+			responseData.Msg = err.(error).Error()
+			output, _ := json.Marshal(responseData)
 			fmt.Fprint(w, output)
 		}
 	}()
@@ -229,9 +229,9 @@ func CheckToken(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 		panic(err)
 	}
 
-	var respons_data ResponseData
-	respons_data.Code = 0
-	output, err := json.Marshal(respons_data)
+	var responsData ResponseData
+	responsData.Code = 0
+	output, err := json.Marshal(responsData)
 	if err != nil {
 		panic(err)
 	}

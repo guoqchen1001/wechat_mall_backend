@@ -10,98 +10,106 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const wx_code2session_url = "https://api.weixin.qq.com/sns/jscode2session"
-const token_secret_key = "guoqchen"
+const wxCode2sessionURL = "https://api.weixin.qq.com/sns/jscode2session"
+const tokenSecretKey = "guoqchen"
 
-// 通过小程序的code获取登录session
+//Code2Session 通过小程序的code获取登录session
+// 入参 code string 小程序登录时微信返回值
+// 回参 WxSessionResponse  error
 func Code2Session(code string) (WxSessionResponse, error) {
 
 	client := http.Client{}
 
-	var wx_config WxConfig
-	var wx_session_response WxSessionResponse
+	var wxConfig WxConfig
+	var wxSessionResponse WxSessionResponse
 
-	req, err := http.NewRequest("GET", wx_code2session_url, nil)
+	req, err := http.NewRequest("GET", wxCode2sessionURL, nil)
 	if err != nil {
-		return wx_session_response, err
+		return wxSessionResponse, err
 	}
 
 	// 微信小程序登录获取的code
-	wx_config.Code = code
+	wxConfig.Code = code
 
 	// 获取微信小程序配置, appid,appsecret,grant_type
-	err = wx_config.Init()
+	err = wxConfig.Init()
 	if err != nil {
-		return wx_session_response, err
+		return wxSessionResponse, err
 	}
 
 	params := req.URL.Query()
-	params.Add("appid", wx_config.AppId)
-	params.Add("secret", wx_config.AppSecret)
-	params.Add("js_code", wx_config.Code)
-	params.Add("grant_type", wx_config.GrantType)
+	params.Add("appid", wxConfig.AppID)
+	params.Add("secret", wxConfig.AppSecret)
+	params.Add("js_code", wxConfig.Code)
+	params.Add("grant_type", wxConfig.GrantType)
 
 	req.URL.RawQuery = params.Encode()
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return wx_session_response, err
+		return wxSessionResponse, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return wx_session_response, err
+		return wxSessionResponse, err
 	}
 
-	err = json.Unmarshal(body, &wx_session_response)
+	err = json.Unmarshal(body, &wxSessionResponse)
 	if err != nil {
-		return wx_session_response, err
+		return wxSessionResponse, err
 	}
 
-	return wx_session_response, nil
+	return wxSessionResponse, nil
 
 }
 
-func CreateToken(user_id string) (string, error) {
-	sign_key := []byte(token_secret_key)
+// CreateToken 创建登录Token
+// 入参 userID string
+// 回参 userID string, err error
+func CreateToken(userID string) (string, error) {
+	signKey := []byte(tokenSecretKey)
 
 	type CustomClaim struct {
-		UserId string
+		UserID string
 		jwt.StandardClaims
 	}
 
 	exp := time.Now().Add(24 * time.Hour)
 	claims := CustomClaim{
-		user_id,
+		userID,
 		jwt.StandardClaims{
 			ExpiresAt: exp.Unix(),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(sign_key)
+	ss, err := token.SignedString(signKey)
 	if err != nil {
 		return "", err
 	}
 	return ss, nil
 }
 
-func ParseToken(token_str string) (string, error) {
+// ParseToken 解析Token
+// 入参 tokenStr string
+// 回参 userid string   err error
+func ParseToken(tokenStr string) (string, error) {
 	type CustomClaim struct {
-		UserId string
+		UserID string
 		jwt.StandardClaims
 	}
 
-	token, err := jwt.ParseWithClaims(token_str, &CustomClaim{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaim{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte("AllYourBase"), nil
 	})
 
 	if claims, ok := token.Claims.(*CustomClaim); ok && token.Valid {
-		return claims.UserId, nil
-	} else {
-		return "", err
+		return claims.UserID, nil
 	}
+
+	return "", err
 
 }
