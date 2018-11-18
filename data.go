@@ -76,7 +76,7 @@ func init() {
 // init 数据库建表
 func init() {
 	// 创建基础配置表
-	err = db.AutoMigrate(&Config{}, &User{}, &Banner{}).Error
+	err = db.AutoMigrate(&Config{}, &User{}, &Banner{}, &Category{}).Error
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"db": "initTable",
