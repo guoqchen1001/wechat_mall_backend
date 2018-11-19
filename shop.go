@@ -10,10 +10,9 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type Banner struct {
-	gorm.Model
+// 不带gorm.model的banner
+type OrgBanner struct {
 	BusinessId int    `json:"businessId"` // 商户ID
-	Id         int    `json:"id"`         // id
 	LinkUrl    string `json:"linkUrl"`    // 链接地址
 	Order      int    `json:"paixu"`      // 排序
 	PicUrl     string `json:"picUrl"`     // 图片地址
@@ -23,6 +22,33 @@ type Banner struct {
 	Title      string `json:"title"`      // 标题
 	Type       string `json:"type"`       // 类型
 	UserId     int    `json:"userId"`     // 用户id
+}
+
+// 首页banner
+type Banner struct {
+	gorm.Model
+	OrgBanner
+}
+
+// 自定义Banner的json序列化方法
+func (this Banner) MarshalJSON() ([]byte, error) {
+
+	type TmpBanner struct {
+		ID         uint   `json:"id"`
+		DateAdd    string `json:"dataAdd"`
+		DateUpdate string `json:"dateUpdate"`
+		OrgBanner
+	}
+
+	tmp := TmpBanner{
+		ID:         this.ID,
+		DateAdd:    this.CreatedAt.Format(TimeFormat),
+		DateUpdate: this.UpdatedAt.Format(TimeFormat),
+		OrgBanner:  this.OrgBanner,
+	}
+
+	return json.Marshal(tmp)
+
 }
 
 // 返回banner列表

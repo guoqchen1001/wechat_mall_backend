@@ -25,6 +25,8 @@ type WxSessionResponse struct {
 	ErrorMsg   string `json:"errmsg"`      // 错误信息
 }
 
+const TimeFormat string = "2006-01-02 15:04:05"
+
 // 获取微信小程序基本配置
 func (wx_config *WxConfig) Init() error {
 
@@ -101,5 +103,30 @@ func init() {
 	config.Name = "充值最少金额"
 
 	db.FirstOrCreate(&config, config)
+
+	// 写入banner数据，需要接口上传
+	banner := new(Banner)
+	banner.PicUrl = "https://localhost:8081/static/banner_1.jpg"
+	banner.Order = 1
+	banner.Status = "0"
+	banner.Title = "1"
+	banner.StatusStr = "显示"
+	db.FirstOrCreate(&banner, banner)
+
+	banner = new(Banner)
+	banner.PicUrl = "https://localhost:8081/static/banner_2.jpg"
+	banner.Order = 2
+	banner.Status = "0"
+	banner.Title = "2"
+	banner.StatusStr = "显示"
+	db.FirstOrCreate(&banner, banner)
+
+	banner = new(Banner)
+	banner.PicUrl = "https://localhost:8081/static/banner_3.jpg"
+	banner.Order = 3
+	banner.Status = "0"
+	banner.Title = "3"
+	banner.StatusStr = "显示"
+	db.FirstOrCreate(&banner, banner)
 
 }

@@ -22,7 +22,9 @@ func main() {
 	mux.GET("/user/wxapp/register/complex", WXAppRegister) // 小程序注册
 	mux.GET("/user/check-token", CheckToken)               // 校验token
 	mux.GET("/score/send/rule", ScoreSendRule)             // 积分赠送规则
-	mux.GET("/shop/banner/list", GetBannerList)            // 获取banner
+	mux.GET("/banner/list", GetBannerList)                 // 获取banner
+
+	mux.ServeFiles("/static/*filepath", http.Dir("static"))
 
 	server := http.Server{
 		Addr:    "127.0.0.1:8081",
