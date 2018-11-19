@@ -26,10 +26,11 @@ type WxSessionResponse struct {
 	ErrorMsg   string `json:"errmsg"`      // 错误信息
 }
 
+//TimeFormat 默认时间合并
 const TimeFormat string = "2006-01-02 15:04:05"
 
-// 获取微信小程序基本配置
-func (wx_config *WxConfig) Init() error {
+//Init 获取微信小程序基本配置
+func (wxConfig *WxConfig) Init() error {
 
 	var config Config
 
@@ -38,7 +39,7 @@ func (wx_config *WxConfig) Init() error {
 	db.Where("No = ?", "appId").First(&config)
 
 	if config != (Config{}) {
-		wx_config.AppID = config.Val
+		wxConfig.AppID = config.Val
 	} else {
 		return errors.New("未找到有效的小程序appid，请检查系统设置")
 	}
@@ -48,12 +49,12 @@ func (wx_config *WxConfig) Init() error {
 	db.Where("No = ?", "appSecret").First(&config)
 
 	if config != (Config{}) {
-		wx_config.AppSecret = config.Val
+		wxConfig.AppSecret = config.Val
 	} else {
 		return errors.New("未找到有效的小程序appid，请检查系统设置")
 	}
 
-	wx_config.GrantType = "authorization_code"
+	wxConfig.GrantType = "authorization_code"
 
 	return nil
 }

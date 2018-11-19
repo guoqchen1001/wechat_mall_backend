@@ -10,7 +10,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// 不带gorm.model的banner
+//OrgBanner 不带gorm.model的banner
 type OrgBanner struct {
 	BusinessID int    `json:"businessId"` // 商户ID
 	LinkURL    string `json:"linkUrl"`    // 链接地址
@@ -45,7 +45,7 @@ type Category struct {
 }
 
 //MarshalJSON 自定义Banner的json序列化方法
-func (this Banner) MarshalJSON() ([]byte, error) {
+func (banner Banner) MarshalJSON() ([]byte, error) {
 
 	type TmpBanner struct {
 		ID         uint   `json:"id"`
@@ -55,17 +55,17 @@ func (this Banner) MarshalJSON() ([]byte, error) {
 	}
 
 	tmp := TmpBanner{
-		ID:         this.ID,
-		DateAdd:    this.CreatedAt.Format(TimeFormat),
-		DateUpdate: this.UpdatedAt.Format(TimeFormat),
-		OrgBanner:  this.OrgBanner,
+		ID:         banner.ID,
+		DateAdd:    banner.CreatedAt.Format(TimeFormat),
+		DateUpdate: banner.UpdatedAt.Format(TimeFormat),
+		OrgBanner:  banner.OrgBanner,
 	}
 
 	return json.Marshal(tmp)
 
 }
 
-// 返回banner列表
+//GetBannerList 返回banner列表
 func GetBannerList(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 	var banners []Banner
 	var responseData ResponseData
