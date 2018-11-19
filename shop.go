@@ -30,18 +30,23 @@ type Banner struct {
 	OrgBanner
 }
 
-//Category 类别
-type Category struct {
-	gorm.Model
+//OrgCategory 类别
+type OrgCategory struct {
 	Icon   string `json:"icon"`   // 图标
 	IsUse  bool   `json:"isUse"`  // 是否使用
 	No     string `json:"key"`    // 类别编码
 	Level  int    `json:"level"`  // 等级
-	Name   string `json:"namew"`  // 名称
+	Name   string `json:"name"`   // 名称
 	Order  int    `json:"paixu"`  // 排序
 	PID    int    `json:"pid"`    // pid
 	Type   string `json:"type"`   // 类型
-	UserID string `json:"userId"` // 用户id
+	UserID int    `json:"userId"` // 用户id
+}
+
+// Category 类别，gorm类型
+type Category struct {
+	gorm.Model
+	OrgCategory
 }
 
 //MarshalJSON 自定义Banner的json序列化方法
@@ -63,6 +68,22 @@ func (banner Banner) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(tmp)
 
+}
+
+// MarshalJSON 自定义json输出
+func (category Category) MarshalJSON() ([]byte, error) {
+	type TmpCategory struct {
+		ID      uint   `json:"id"`
+		DateAdd string `json:"dateAdd"`
+		OrgCategory
+	}
+
+	tmp := TmpCategory{
+		ID:          category.ID,
+		DateAdd:     category.CreatedAt.Format(TimeFormat),
+		OrgCategory: category.OrgCategory,
+	}
+	return json.Marshal(tmp)
 }
 
 //GetBannerList 返回banner列表
@@ -111,6 +132,20 @@ func GetCategoryList(w http.ResponseWriter, r *http.Request, o httprouter.Params
 		}
 	}()
 
-	fmt.Fprint(w, "")
+	var categoies []Category
+	err := db.Find(&categoies).Error
+	if err != nil {
+		panic(err)
+	}
+
+	var responseData ResponseData
+	responseData.Code = 0
+	responseData.Data = categoies
+	output, err := json.Marshal(responseData)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprint(w, string(output))
 
 }

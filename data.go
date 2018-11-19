@@ -9,6 +9,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//ResponseData 通用信息返回结构
+type ResponseData struct {
+	Code int         `json:"code"`    // 返回值
+	Msg  string      `json:"message"` // 错误信息
+	Data interface{} `json:"data"`    // 返回数据
+}
+
 //WxConfig 微信配置信息，由参数表获取
 type WxConfig struct {
 	AppID     string
@@ -86,7 +93,7 @@ func init() {
 	}
 }
 
-//init 基础数据后续需转化为sql语句执行
+//init 基础数据，后续需转化接口配置
 func init() {
 
 	// 写入基础数据-店铺名称
@@ -134,6 +141,11 @@ func init() {
 	if err != nil {
 		entry.Error(err.Error)
 	}
+
+}
+
+// init 写入banner数据，后续虚改为上传
+func init() {
 	// 写入banner数据，需要接口上传
 	banner := new(Banner)
 	banner.PicURL = "https://localhost:8081/static/banner_1.jpg"
@@ -158,5 +170,62 @@ func init() {
 	banner.Title = "3"
 	banner.StatusStr = "显示"
 	db.FirstOrCreate(&banner, banner)
+
+}
+
+// init 写入类别，后续需提供接口
+func init() {
+
+	entry := log.WithFields(logrus.Fields{
+		"category": "init",
+	})
+
+	// 写入现切水果
+	category := new(Category)
+	category.Level = 1
+	category.IsUse = true
+	category.No = "01"
+	category.Name = "现切水果"
+	category.Order = 1
+	err := db.FirstOrCreate(&category, category).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
+
+	// 写入招牌推荐
+	category = new(Category)
+	category.Level = 1
+	category.IsUse = true
+	category.No = "02"
+	category.Name = "招牌推荐"
+	category.Order = 2
+	err = db.FirstOrCreate(&category, category).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
+
+	// 写入好吃推荐
+	category = new(Category)
+	category.Level = 1
+	category.IsUse = true
+	category.No = "03"
+	category.Name = "好吃推荐"
+	category.Order = 3
+	err = db.FirstOrCreate(&category, category).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
+
+	// 写入休闲干果
+	category = new(Category)
+	category.Level = 1
+	category.IsUse = true
+	category.No = "04"
+	category.Name = "休闲干果"
+	category.Order = 4
+	err = db.FirstOrCreate(&category, category).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 
 }

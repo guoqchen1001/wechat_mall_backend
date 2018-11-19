@@ -9,13 +9,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-//ResponseData 通用信息返回结构
-type ResponseData struct {
-	Code int         `json:"code"`    // 返回值
-	Msg  string      `json:"message"` // 错误信息
-	Data interface{} `json:"data"`    // 返回数据
-}
-
 func main() {
 
 	mux := httprouter.New()
@@ -25,6 +18,7 @@ func main() {
 	mux.GET("/user/check-token", CheckToken)               // 校验token
 	mux.GET("/score/send/rule", ScoreSendRule)             // 积分赠送规则
 	mux.GET("/banner/list", GetBannerList)                 // 获取banner
+	mux.GET("/shop/goods/category/all", GetCategoryList)   // 获取类别
 
 	mux.ServeFiles("/static/*filepath", http.Dir("static"))
 
