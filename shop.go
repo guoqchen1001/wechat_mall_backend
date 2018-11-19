@@ -12,25 +12,39 @@ import (
 
 // 不带gorm.model的banner
 type OrgBanner struct {
-	BusinessId int    `json:"businessId"` // 商户ID
-	LinkUrl    string `json:"linkUrl"`    // 链接地址
+	BusinessID int    `json:"businessId"` // 商户ID
+	LinkURL    string `json:"linkUrl"`    // 链接地址
 	Order      int    `json:"paixu"`      // 排序
-	PicUrl     string `json:"picUrl"`     // 图片地址
+	PicURL     string `json:"picUrl"`     // 图片地址
 	Name       string `json:"remark"`     // 名称
 	Status     string `json:"status"`     // 状态
 	StatusStr  string `json:"statusStr"`  // 状态名称
 	Title      string `json:"title"`      // 标题
 	Type       string `json:"type"`       // 类型
-	UserId     int    `json:"userId"`     // 用户id
+	UserID     int    `json:"userId"`     // 用户id
 }
 
-// 首页banner
+//Banner 首页banner
 type Banner struct {
 	gorm.Model
 	OrgBanner
 }
 
-// 自定义Banner的json序列化方法
+//Category 类别
+type Category struct {
+	gorm.Model
+	Icon   string `json:"icon"`   // 图标
+	IsUse  bool   `json:"isUse"`  // 是否使用
+	No     string `json:"key"`    // 类别编码
+	Level  int    `json:"level"`  // 等级
+	Name   string `json:"namew"`  // 名称
+	Order  int    `json:"paixu"`  // 排序
+	PID    int    `json:"pid"`    // pid
+	Type   string `json:"type"`   // 类型
+	UserID string `json:"userId"` // 用户id
+}
+
+//MarshalJSON 自定义Banner的json序列化方法
 func (this Banner) MarshalJSON() ([]byte, error) {
 
 	type TmpBanner struct {
@@ -54,15 +68,15 @@ func (this Banner) MarshalJSON() ([]byte, error) {
 // 返回banner列表
 func GetBannerList(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 	var banners []Banner
-	var response_data ResponseData
+	var responseData ResponseData
 
 	defer func() {
 		if err := recover(); err != nil {
-			var response_data ResponseData
-			response_data.Code = 10
-			response_data.Msg = err.(error).Error()
+			var responseData ResponseData
+			responseData.Code = 10
+			responseData.Msg = err.(error).Error()
 
-			output, _ := json.Marshal(response_data)
+			output, _ := json.Marshal(responseData)
 			fmt.Fprint(w, string(output))
 		}
 	}()
@@ -72,14 +86,31 @@ func GetBannerList(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 		panic(err)
 	}
 
-	response_data.Code = 0
-	response_data.Data = banners
+	responseData.Code = 0
+	responseData.Data = banners
 
-	output, err := json.Marshal(response_data)
+	output, err := json.Marshal(responseData)
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Fprint(w, string(output))
+
+}
+
+// GetCategoryList 获取类别列表
+func GetCategoryList(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			var responsData ResponseData
+			responsData.Code = 10
+			responsData.Msg = err.(error).Error()
+			output, _ := json.Marshal(responsData)
+			fmt.Fprint(w, string(output))
+		}
+	}()
+
+	fmt.Fprint(w, "")
 
 }

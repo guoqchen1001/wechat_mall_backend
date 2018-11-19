@@ -6,21 +6,22 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/sirupsen/logrus"
 )
 
-// 微信配置信息，由参数表获取
+//WxConfig 微信配置信息，由参数表获取
 type WxConfig struct {
-	AppId     string
+	AppID     string
 	AppSecret string
 	GrantType string
 	Code      string
 }
 
-// 微信获取session返回信息
+//WxSessionResponse 微信获取session返回信息
 type WxSessionResponse struct {
-	OpenId     string `json:"openid"`      // 用户唯一标识
+	OpenID     string `json:"openid"`      // 用户唯一标识
 	SessionKey string `json:"session_key"` // 会话密钥
-	UnionId    string `json:"unionid"`     // 用户在开放平台的唯一标识符
+	UnionID    string `json:"unionid"`     // 用户在开放平台的唯一标识符
 	ErrorCode  int    `json:"errcode"`     // 错误码
 	ErrorMsg   string `json:"errmsg"`      // 错误信息
 }
@@ -37,7 +38,7 @@ func (wx_config *WxConfig) Init() error {
 	db.Where("No = ?", "appId").First(&config)
 
 	if config != (Config{}) {
-		wx_config.AppId = config.Val
+		wx_config.AppID = config.Val
 	} else {
 		return errors.New("未找到有效的小程序appid，请检查系统设置")
 	}
@@ -60,17 +61,32 @@ func (wx_config *WxConfig) Init() error {
 var db *gorm.DB
 var err error
 
+// init 数据库连接
 func init() {
 
 	db, err = gorm.Open("postgres", "host=127.0.0.1 port=5432 user=wechat dbname=wechat_mall password=123 sslmode=disable")
 
 	if err != nil {
-		panic(err)
+		log.WithFields(logrus.Fields{
+			"db": "connect",
+		}).Panic(err)
 	}
-	// 创建基础配置表
-	db.AutoMigrate(&Config{}, &User{}, &Banner{})
 
-	// 基础数据后续需转化为sql语句执行
+}
+
+// init 数据库建表
+func init() {
+	// 创建基础配置表
+	err = db.AutoMigrate(&Config{}, &User{}, &Banner{}, &Category{}).Error
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"db": "initTable",
+		}).Panic(err)
+	}
+}
+
+//init 基础数据后续需转化为sql语句执行
+func init() {
 
 	// 写入基础数据-店铺名称
 	config := new(Config)
@@ -78,7 +94,12 @@ func init() {
 	config.Val = "小卖铺"
 	config.Name = "店铺名称"
 
-	db.FirstOrCreate(&config, config)
+	entry := log.WithFields(logrus.Fields{"config": "init"})
+
+	err := db.FirstOrCreate(&config, config).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 
 	// 写入基础数据-小程序appid
 	config = new(Config)
@@ -86,7 +107,10 @@ func init() {
 	config.Val = "wxb05d528592b74609"
 	config.Name = "小程序appid"
 
-	db.FirstOrCreate(&config, config)
+	err = db.FirstOrCreate(&config, config).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 
 	// 写入基础数据库-小程序密钥
 	config = new(Config)
@@ -94,7 +118,10 @@ func init() {
 	config.Val = "d89d3ee840cd9dd89015086962229f52"
 	config.Name = "小程序密钥"
 
-	db.FirstOrCreate(&config, config)
+	err = db.FirstOrCreate(&config, config).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 
 	// 写入基础数据-最低充值金额
 	config = new(Config)
@@ -102,11 +129,13 @@ func init() {
 	config.Val = "1"
 	config.Name = "充值最少金额"
 
-	db.FirstOrCreate(&config, config)
-
+	err = db.FirstOrCreate(&config, config).Error
+	if err != nil {
+		entry.Error(err.Error)
+	}
 	// 写入banner数据，需要接口上传
 	banner := new(Banner)
-	banner.PicUrl = "https://localhost:8081/static/banner_1.jpg"
+	banner.PicURL = "https://localhost:8081/static/banner_1.jpg"
 	banner.Order = 1
 	banner.Status = "0"
 	banner.Title = "1"
@@ -114,7 +143,7 @@ func init() {
 	db.FirstOrCreate(&banner, banner)
 
 	banner = new(Banner)
-	banner.PicUrl = "https://localhost:8081/static/banner_2.jpg"
+	banner.PicURL = "https://localhost:8081/static/banner_2.jpg"
 	banner.Order = 2
 	banner.Status = "0"
 	banner.Title = "2"
@@ -122,7 +151,7 @@ func init() {
 	db.FirstOrCreate(&banner, banner)
 
 	banner = new(Banner)
-	banner.PicUrl = "https://localhost:8081/static/banner_3.jpg"
+	banner.PicURL = "https://localhost:8081/static/banner_3.jpg"
 	banner.Order = 3
 	banner.Status = "0"
 	banner.Title = "3"
