@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"wechat_mall_backend/models"
 
 	"github.com/jinzhu/gorm"
 	"github.com/julienschmidt/httprouter"
@@ -14,21 +15,7 @@ import (
 )
 
 //User 用户
-type User struct {
-	UserID    string `gorm:"primary_key"` // 用户id
-	UserNo    string // 用户编码
-	UserName  string // 用户名
-	WechatID  string `json:"openId"` // 微信id
-	Phone     string // 手机号
-	Country   string // 国家
-	NickName  string `json:"nickName"`  //  昵称
-	AvatarURL string `json:"avatarurl"` // 图像地址
-	Gender    int    // 性别
-	Province  string // 省份
-	City      string // 城市
-	Language  string // 显示语言
-
-}
+type User models.User
 
 //WXAppLogin 微信登录
 func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
@@ -69,7 +56,7 @@ func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 	// 获取微信session和openid
 	code := r.Form["code"][0]
-	wxSessionResponse, err = Code2Session(code)
+	wxSessionResponse, err := Code2Session(code)
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +64,7 @@ func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 	// 用户不存在需要注册
 	user := User{}
 
-	err = db.Where(&User{WechatID: wxSessionResponse.OpenID}).First(&user).Error
+	err = models.Db.Where(&User{WechatID: wxSessionResponse.OpenID}).First(&user).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
@@ -147,7 +134,7 @@ func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 	iv := r.Form["iv"][0]
 
 	// 获取session
-	wxSessionResponse, err = Code2Session(code)
+	wxSessionResponse, err := Code2Session(code)
 	if err != nil {
 		panic(err)
 	}
@@ -182,12 +169,12 @@ func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 		panic(err)
 	}
 
-	err = db.Create(user).Error
+	err = models.Db.Create(user).Error
 	if err != nil {
 		panic(err)
 	}
 
-	if db.NewRecord(user) {
+	if models.Db.NewRecord(user) {
 		panic(errors.New("保存用户到数据库失败"))
 	}
 

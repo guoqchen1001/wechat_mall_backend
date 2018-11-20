@@ -5,22 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"wechat_mall_backend/models"
 
 	"github.com/jinzhu/gorm"
 	"github.com/julienschmidt/httprouter"
 )
 
-//Config 配置文件信息
-type Config struct {
-	No   string `gorm:"primary_key" json:"no"`
-	Val  string `json:"value"`
-	Name string `json:"remark"`
-}
-
 //GetValue 获取系统参数值
 func GetValue(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
-	var config Config
+	var config models.Config
 	var responseData ResponseData
 
 	defer func() {
@@ -37,13 +31,13 @@ func GetValue(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 
 	if len(r.Form["key"]) > 0 {
 
-		err := db.Where("No = ?", r.Form["key"]).First(&config).Error
+		err := models.Db.Where("No = ?", r.Form["key"]).First(&config).Error
 
 		if err != nil && err != gorm.ErrRecordNotFound {
 			panic(err)
 		}
 
-		if config != (Config{}) {
+		if config != (models.Config{}) {
 			responseData.Code = 0
 			responseData.Data = config
 

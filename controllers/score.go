@@ -1,21 +1,13 @@
-// scr0e.go 积分
-package main
+package controllers
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"wechat_mall_backend/models"
 
 	"github.com/julienschmidt/httprouter"
 )
-
-//ScoreRule 积分规则结构
-type ScoreRule struct {
-	Code    string  // 积分代码
-	CodeStr string  `json:"codeStr"` // 积分字符说明
-	Confine float32 // 适用范围
-	Score   int     // 分值3
-}
 
 //ScoreSendRule 积分赠送规则
 func ScoreSendRule(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
@@ -35,7 +27,7 @@ func ScoreSendRule(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 	r.ParseForm()
 
 	if len(r.Form["code"]) <= 0 {
-		panic(err)
+		panic(fmt.Errorf("未找到参数%s", "code"))
 	}
 
 	var responseData ResponseData
@@ -43,9 +35,9 @@ func ScoreSendRule(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 	// 好评送
 	if code == "goodReputation" {
 
-		var scoreRuleList []ScoreRule
+		var scoreRuleList []models.ScoreRule
 
-		scoreRule := ScoreRule{
+		scoreRule := models.ScoreRule{
 			Code:    "goodReputation",
 			CodeStr: "好评送",
 			Confine: 0.00,
