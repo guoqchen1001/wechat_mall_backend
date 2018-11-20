@@ -1,21 +1,172 @@
-// user.go 用户
-package main
+package controllers
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"time"
 	"wechat_mall_backend/models"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/julienschmidt/httprouter"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/xlstudio/wxbizdatacrypt"
 )
 
-//User 用户
-type User models.User
+//WxConfig 微信配置信息，由参数表获取
+type WxConfig struct {
+	AppID     string
+	AppSecret string
+	GrantType string
+	Code      string
+}
+
+//Init 获取微信小程序基本配置
+func (wxConfig *WxConfig) Init() error {
+
+	type Config models.Config
+	var config Config
+
+	// 获取小程序id
+	config = Config{}
+	models.Db.Where("No = ?", "appId").First(&config)
+
+	if config != (Config{}) {
+		wxConfig.AppID = config.Val
+	} else {
+		return errors.New("未找到有效的小程序appid，请检查系统设置")
+	}
+
+	// 获取小程序密钥
+	config = Config{}
+	models.Db.Where("No = ?", "appSecret").First(&config)
+
+	if config != (Config{}) {
+		wxConfig.AppSecret = config.Val
+	} else {
+		return errors.New("未找到有效的小程序appid，请检查系统设置")
+	}
+
+	wxConfig.GrantType = "authorization_code"
+
+	return nil
+}
+
+//WxSessionResponse 微信获取session返回信息
+type WxSessionResponse struct {
+	OpenID     string `json:"openid"`      // 用户唯一标识
+	SessionKey string `json:"session_key"` // 会话密钥
+	UnionID    string `json:"unionid"`     // 用户在开放平台的唯一标识符
+	ErrorCode  int    `json:"errcode"`     // 错误码
+	ErrorMsg   string `json:"errmsg"`      // 错误信息
+}
+
+const wxCode2sessionURL = "https://api.weixin.qq.com/sns/jscode2session"
+const tokenSecretKey = "guoqchen"
+
+//Code2Session 通过小程序的code获取登录session
+// 入参 code string 小程序登录时微信返回值
+// 回参 WxSessionResponse  error
+func Code2Session(code string) (WxSessionResponse, error) {
+
+	client := http.Client{}
+
+	var wxConfig WxConfig
+	var wxSessionResponse WxSessionResponse
+
+	req, err := http.NewRequest("GET", wxCode2sessionURL, nil)
+	if err != nil {
+		return wxSessionResponse, err
+	}
+
+	// 微信小程序登录获取的code
+	wxConfig.Code = code
+
+	// 获取微信小程序配置, appid,appsecret,grant_type
+	err = wxConfig.Init()
+	if err != nil {
+		return wxSessionResponse, err
+	}
+
+	params := req.URL.Query()
+	params.Add("appid", wxConfig.AppID)
+	params.Add("secret", wxConfig.AppSecret)
+	params.Add("js_code", wxConfig.Code)
+	params.Add("grant_type", wxConfig.GrantType)
+
+	req.URL.RawQuery = params.Encode()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return wxSessionResponse, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return wxSessionResponse, err
+	}
+
+	err = json.Unmarshal(body, &wxSessionResponse)
+	if err != nil {
+		return wxSessionResponse, err
+	}
+
+	return wxSessionResponse, nil
+
+}
+
+// CreateToken 创建登录Token
+// 入参 userID string
+// 回参 userID string, err error
+func CreateToken(userID string) (string, error) {
+	signKey := []byte(tokenSecretKey)
+
+	type CustomClaim struct {
+		UserID string
+		jwt.StandardClaims
+	}
+
+	exp := time.Now().Add(24 * time.Hour)
+	claims := CustomClaim{
+		userID,
+		jwt.StandardClaims{
+			ExpiresAt: exp.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString(signKey)
+	if err != nil {
+		return "", err
+	}
+	return ss, nil
+}
+
+// ParseToken 解析Token
+// 入参 tokenStr string
+// 回参 userid string   err error
+func ParseToken(tokenStr string) (string, error) {
+	type CustomClaim struct {
+		UserID string
+		jwt.StandardClaims
+	}
+
+	token, err := jwt.ParseWithClaims(tokenStr, &CustomClaim{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte("AllYourBase"), nil
+	})
+
+	if claims, ok := token.Claims.(*CustomClaim); ok && token.Valid {
+		return claims.UserID, nil
+	}
+
+	return "", err
+
+}
 
 //WXAppLogin 微信登录
 func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
@@ -62,15 +213,15 @@ func WXAppLogin(w http.ResponseWriter, r *http.Request, o httprouter.Params) {
 	}
 
 	// 用户不存在需要注册
-	user := User{}
+	user := models.User{}
 
-	err = models.Db.Where(&User{WechatID: wxSessionResponse.OpenID}).First(&user).Error
+	err = models.Db.Where(&models.User{WechatID: wxSessionResponse.OpenID}).First(&user).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
 
-	if user == (User{}) {
+	if user == (models.User{}) {
 		panic(UserNotFoundError)
 	}
 
@@ -160,7 +311,7 @@ func WXAppRegister(w http.ResponseWriter, r *http.Request, o httprouter.Params) 
 	if err != nil {
 		panic(err)
 	}
-	user := new(User)
+	user := new(models.User)
 	user.UserID = userid.String()
 
 	resultByte := []byte(result.(string))

@@ -49,7 +49,7 @@ func init() {
 
 	err := Db.FirstOrCreate(&config, config).Error
 	if err != nil {
-		entry.Error(err.Error)
+		entry.Error(err)
 	}
 
 	// 写入基础数据-小程序appid
@@ -60,7 +60,7 @@ func init() {
 
 	err = Db.FirstOrCreate(&config, config).Error
 	if err != nil {
-		entry.Error(err.Error)
+		entry.Error(err)
 	}
 
 	// 写入基础数据库-小程序密钥
@@ -71,7 +71,7 @@ func init() {
 
 	err = Db.FirstOrCreate(&config, config).Error
 	if err != nil {
-		entry.Error(err.Error)
+		entry.Error(err)
 	}
 
 	// 写入基础数据-最低充值金额
@@ -82,7 +82,7 @@ func init() {
 
 	err = Db.FirstOrCreate(&config, config).Error
 	if err != nil {
-		entry.Error(err.Error)
+		entry.Error(err)
 	}
 
 }
@@ -132,7 +132,7 @@ func init() {
 	category.Order = 1
 	err := Db.FirstOrCreate(&category, category).Error
 	if err != nil {
-		entry.Error(err.Error)
+		entry.Error(err)
 	}
 
 	// 写入招牌推荐
@@ -144,7 +144,7 @@ func init() {
 	category.Order = 2
 	err = Db.FirstOrCreate(&category, category).Error
 	if err != nil {
-		entry.Error(err.Error)
+		entry.Error(err)
 	}
 
 	// 写入好吃推荐
@@ -156,7 +156,7 @@ func init() {
 	category.Order = 3
 	err = Db.FirstOrCreate(&category, category).Error
 	if err != nil {
-		entry.Error(err.Error)
+		entry.Error(err)
 	}
 
 	// 写入休闲干果
@@ -168,7 +168,7 @@ func init() {
 	category.Order = 4
 	err = Db.FirstOrCreate(&category, category).Error
 	if err != nil {
-		entry.Error(err.Error)
+		entry.Error(err)
 	}
 
 }

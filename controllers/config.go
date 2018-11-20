@@ -1,5 +1,4 @@
-// config.go 配置信息
-package main
+package controllers
 
 import (
 	"encoding/json"
